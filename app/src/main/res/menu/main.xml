@@ -23,11 +23,5 @@
         android:orderInCategory="100"
         android:icon="@drawable/ic_action_friends"
         android:title="@string/action_friends"
-        app:showAsAction="always" />
-    <item
-        android:id="@+id/checkin"
-        android:orderInCategory="100"
-        android:icon="@drawable/ic_action_checkin"
-        android:title="@string/action_checkin"
-        app:showAsAction="always" />
+        app:showAsAction="always"/>
 </menu>

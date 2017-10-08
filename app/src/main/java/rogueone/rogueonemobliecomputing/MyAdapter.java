@@ -37,10 +37,32 @@ class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>  {
         public RelativeLayout mRelativeLayout;
         public TextView mTextView;
         public Button button;
+        public Button decline;
         public ViewHolder(RelativeLayout v) {
             super(v);
             button = (Button) v.findViewById(R.id.accept);
             mTextView = (TextView) v.findViewById(R.id.request);
+            decline = (Button) v.findViewById(R.id.decline);
+            decline.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String Username = mTextView.getText().toString();
+                    final int position = getAdapterPosition();
+                    Call<ResponseBody> call = client.DeclineRequest(Username);
+                    call.enqueue(new Callback<ResponseBody>() {
+                        @Override
+                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                            Toast.makeText(mcontext,"Declined successfully",Toast.LENGTH_LONG).show();
+                            removeAt(position);
+                        }
+
+                        @Override
+                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                            showErrorToast(t,mcontext);
+                        }
+                    });
+                }
+            });
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

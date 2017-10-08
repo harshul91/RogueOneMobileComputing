@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RogueOneMoblieComputing</string>
+    <string name="app_name">Location Diary</string>
     <string name="email">Email Address</string>
     <string name="password">Password</string>
     <string name="confirm_password">Confirm Password</string>

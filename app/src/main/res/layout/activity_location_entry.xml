@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,6 +11,9 @@
         layout="@layout/appbar"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -28,20 +32,66 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:layout_marginBottom="8dp"/>
-        <Spinner
-            android:id="@+id/trips_spinner"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
-            />
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold"
+                android:textSize="@dimen/card_font_size"
+                android:layout_marginTop="8dp"
+                android:text="Trip(Optional)"/>
+            <Spinner
+                android:id="@+id/trips_spinner"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginTop="8dp"
+                android:popupBackground="#000000"
+                />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp">
+                <android.support.design.widget.TextInputEditText
+                    android:id="@+id/entry_tag"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Tags"
+                    android:inputType="text"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true">
+                    <requestFocus/>
+                </android.support.design.widget.TextInputEditText>
+            </android.support.design.widget.TextInputLayout>
+            <Button
+                android:id="@+id/add_tag"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginTop="14dp"
+                android:text="Add Tag"/>
+        </LinearLayout>
         <com.pchmn.materialchips.ChipsInput
             android:id="@+id/tags"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:hint="@string/tags"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
+            android:paddingLeft="6dp"
             app:chip_labelColor="@color/chips_opened_bg"
             app:chip_backgroundColor="@color/accent"
             app:chip_deletable="true"
@@ -66,4 +116,5 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
     </LinearLayout>
+    </ScrollView>
 </android.support.constraint.ConstraintLayout>

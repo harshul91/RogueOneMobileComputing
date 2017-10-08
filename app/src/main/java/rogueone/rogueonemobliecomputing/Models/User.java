@@ -3,9 +3,6 @@ package rogueone.rogueonemobliecomputing.Models;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Created by jayas on 1/09/2017.
- */
 
 public class User {
     @SerializedName("username")

@@ -4,10 +4,10 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.compat.BuildConfig;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -27,6 +27,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -44,6 +45,7 @@ public class MainActivity extends OptionsMenuActivity
     @BindView(R.id.new_trip)
     Button _newTrip;
     ProgressDialog progressDialog;
+    String email_id;
     public OnClickListener diaryListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -115,8 +117,44 @@ public class MainActivity extends OptionsMenuActivity
             overridePendingTransition(R.anim.push_left_in, R.anim.push_left_out);
         }
     };
+    private void incognitoMode() {
+        Call<ResponseBody> call = client.goIncognito();
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if(response.isSuccessful()){
+                    Toast.makeText(getApplicationContext(),"You are now incognito",Toast.LENGTH_LONG).show();
+                }else{
+                    try {
+                        showErrorToast(new Throwable(response.errorBody().string()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
 
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                showErrorToast(t);
+            }
+        });
+    }
+    private void setIncognito(final NavigationView nav) {
+        Call<ResponseBody> call = client.getIncognito();
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if(response.isSuccessful()){
+                    nav.setCheckedItem(R.id.nav_incognito);
+                }
+            }
 
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                showErrorToast(t);
+            }
+        });
+    }
     @Override
     public void startDialog(){
         progressDialog.setIndeterminate(true);
@@ -142,14 +180,25 @@ public class MainActivity extends OptionsMenuActivity
             Log.e(BuildConfig.APPLICATION_ID,e.getMessage());
         }
         if(token==null){
-            finish();
-            startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+            try{
+                token = PreferenceManager.getDefaultSharedPreferences(this).getString(Constants.PACKAGE_NAME+"token","");
+                email_id = PreferenceManager.getDefaultSharedPreferences(this).getString(Constants.PACKAGE_NAME+"email_id","");
+            }catch(Exception e){
+                startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+                finish();
+            }
+            if(token.equals("")||token==null){
+                startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+                finish();
+            }
+
         }
         client = ServiceGenerator
                 .createService(APIClient.class, token, getBaseContext());
         progressDialog = new ProgressDialog(MainActivity.this,
                 R.style.AppTheme_Dark_Dialog);
         token = getIntent().getStringExtra("token");
+        email_id = getIntent().getStringExtra("email");
         ButterKnife.bind(this);
         _diary.setOnClickListener(diaryListener);
         _trips.setOnClickListener(tripsListener);
@@ -165,8 +214,7 @@ public class MainActivity extends OptionsMenuActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                createCheckIn();
             }
         });
 
@@ -175,10 +223,15 @@ public class MainActivity extends OptionsMenuActivity
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
-
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        View header=navigationView.getHeaderView(0);
+        TextView email = (TextView)header.findViewById(R.id.user_email);
+        email.setText(email_id);
+        setIncognito(navigationView);
     }
+
+
 
     @Override
     public void onBackPressed() {
@@ -197,18 +250,14 @@ public class MainActivity extends OptionsMenuActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
+        if (id == R.id.nav_incognito) {
+            incognitoMode();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
 }

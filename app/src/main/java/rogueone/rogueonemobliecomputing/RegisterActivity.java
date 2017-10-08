@@ -76,4 +76,10 @@ public class RegisterActivity extends AppCompatActivity {
         _save.setOnClickListener(saveData);
         _login.setOnClickListener(loginListener);
     }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        System.exit(0);
+    }
 }

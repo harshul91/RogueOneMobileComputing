@@ -16,4 +16,5 @@
     <color name="base">#AAAAAA</color>
     <color name="iron">#CCCCCC</color>
     <color name="white">#FFFFFF</color>
+    <color name="wallet_holo_blue_light">#33b5e5</color>
 </resources>

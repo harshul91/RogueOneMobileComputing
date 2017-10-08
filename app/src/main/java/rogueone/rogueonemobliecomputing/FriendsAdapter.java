@@ -1,8 +1,10 @@
 package rogueone.rogueonemobliecomputing;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RelativeLayout;
@@ -21,10 +23,12 @@ class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHolder> {
     private List<String> mDataset;
     private static APIClient client;
     private static Context mcontext;
-    public FriendsAdapter(List<String> myDataset, APIClient Contextclient, Context context) {
+    private String mToken;
+    public FriendsAdapter(List<String> myDataset, APIClient Contextclient, Context context,String token) {
         mDataset = myDataset;
         client = Contextclient;
         mcontext = context;
+        mToken = token;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -35,28 +39,16 @@ class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHolder> {
         public ViewHolder(RelativeLayout v) {
             super(v);
             button = (Button) v.findViewById(R.id.go_to_profile);
-            mTextView = (TextView) v.findViewById(R.id.friend);
-            /*button.setOnClickListener(new View.OnClickListener() {
+            button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    String Username = mTextView.getText().toString();
-                    Call<ResponseBody> call = client.ConfirmRequest(Username);
-                    call.enqueue(new Callback<ResponseBody>() {
-                        @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                            if(response.isSuccessful()){
-                                Toast.makeText(mcontext,"Accepted successfully",Toast.LENGTH_LONG).show();
-                            }else {
-                                showErrorToast(new Throwable("Error occured while accepting the request"),mcontext);
-                            }
-                        }
-                        @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            showErrorToast(t,mcontext);
-                        }
-                    });
+                    Intent intent = new Intent(mcontext,ProfileActivity.class);
+                    intent.putExtra("token",mToken);
+                    intent.putExtra("userEmail",mTextView.getText().toString());
+                    mcontext.startActivity(intent);
                 }
-            });*/
+            });
+            mTextView = (TextView) v.findViewById(R.id.friend);
             mRelativeLayout = v;
         }
     }

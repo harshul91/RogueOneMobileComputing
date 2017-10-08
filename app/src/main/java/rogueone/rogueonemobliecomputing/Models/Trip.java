@@ -1,12 +1,13 @@
 package rogueone.rogueonemobliecomputing.Models;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by jayas on 4/10/2017.
  */
 
-public class Trip {
+public class Trip implements Serializable{
     public int TripID;
     public String TripName;
     public String Destination;

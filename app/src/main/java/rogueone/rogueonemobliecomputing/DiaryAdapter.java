@@ -1,6 +1,7 @@
 package rogueone.rogueonemobliecomputing;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,10 +10,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.pchmn.materialchips.ChipsInput;
+import com.google.android.flexbox.FlexboxLayout;
 
 import java.util.List;
 
+import fisk.chipcloud.ChipCloud;
+import fisk.chipcloud.ChipCloudConfig;
 import rogueone.rogueonemobliecomputing.Interfaces.APIClient;
 import rogueone.rogueonemobliecomputing.Models.LocationEntry;
 
@@ -35,14 +38,15 @@ class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.ViewHolder> {
         public RelativeLayout mRelativeLayout;
         public TextView mAddressTextView;
         public TextView mFirstCheckInTextView;
-        public ChipsInput mEntryTagsTextView;
+        /*public ChipsInput mEntryTagsTextView;*/
         public TextView mComments;
         public TextView mCheckIns;
+        public FlexboxLayout mFlexboxLayout;
         public ViewHolder(RelativeLayout v) {
             super(v);
             mAddressTextView = (TextView) v.findViewById(R.id.address);
             mFirstCheckInTextView = (TextView) v.findViewById(R.id.first_checkin);
-            mEntryTagsTextView = (ChipsInput) v.findViewById(R.id.entry_tags);
+            mFlexboxLayout = (FlexboxLayout) v.findViewById(R.id.entry_tags);
             mComments = (TextView) v.findViewById(R.id.comments);
             mCheckIns = (TextView) v.findViewById(R.id.all_checkins);
             mRelativeLayout = v;
@@ -73,12 +77,24 @@ class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.ViewHolder> {
         holder.mCheckIns.setText(Integer.toString(no_of_checkins));
         holder.mComments.setText(mDataset.get(position).Comments);
         if(mDataset.get(position).BadgeNames.size()==0){
-            holder.mEntryTagsTextView.setVisibility(View.GONE);
+            holder.mFlexboxLayout.setVisibility(View.GONE);
         }else{
-            for(String label:mDataset.get(position).BadgeNames){
+            /*for(String label:mDataset.get(position).BadgeNames){
                 holder.mEntryTagsTextView.addChip(label,null);
+            }*/
+            ChipCloudConfig config = new ChipCloudConfig()
+                    .selectMode(ChipCloud.SelectMode.multi)
+                    .checkedChipColor(Color.parseColor("#ddaa00"))
+                    .checkedTextColor(Color.parseColor("#ffffff"))
+                    .uncheckedChipColor(Color.parseColor("#ddaa00"))
+                    .uncheckedTextColor(Color.parseColor("#ffffff"))
+                    .useInsetPadding(true);
+            ChipCloud chipCloud = new ChipCloud(mcontext, holder.mFlexboxLayout,config);
+            for (String badge:mDataset.get(position).BadgeNames) {
+                chipCloud.addChip(badge);
             }
         }
+
     }
 
     @Override

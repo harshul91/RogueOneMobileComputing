@@ -33,9 +33,6 @@ public class ServiceGenerator {
             if(!httpClient.interceptors().contains(interceptor)){
                 httpClient.addInterceptor(interceptor);
             }
-/*            SharedPreferences preferences = context.getSharedPreferences(BuildConfig.APPLICATION_ID,context.MODE_PRIVATE);
-            String refreshToken = preferences.getString("refresh_token",null);
-            httpClient.authenticator(new RefreshTokenAuthenticator(httpClient,refreshToken,context));*/
         }
 
         if(!httpClient.interceptors().contains(logging)){

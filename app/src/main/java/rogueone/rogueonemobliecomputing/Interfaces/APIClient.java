@@ -7,13 +7,11 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.Query;
 import rogueone.rogueonemobliecomputing.Models.LocationEntry;
 import rogueone.rogueonemobliecomputing.Models.Trip;
 
 public interface APIClient {
-    //api/Account/UserInfo
-    @GET("/api/Account/UserInfo")
-    Call<ResponseBody> userinfo();
     //api/User/DiaryEntries
     @GET("/api/User/DiaryEntries")
     Call<List<LocationEntry>> getDiaryEntries();
@@ -32,9 +30,6 @@ public interface APIClient {
     //api/User/AppUsers
     @GET("/api/User/AppUsers")
     Call<List<String>> getAppUsers();
-    //api/User/LocationEntry
-    @GET("/api/User/LocationEntry")
-    Call<List<String>> getLocationEntry();
     //api/User/AddFriend
     @POST("/api/User/FriendRequest")
     Call<ResponseBody> SendRequest(@Body String Username);
@@ -49,4 +44,21 @@ public interface APIClient {
     //api/User/createTrip
     @POST("/api/User/createTrip")
     Call<ResponseBody> createTrip(@Body Trip trip);
+    //api/User/declineRequest
+    @POST("/api/User/declineRequest")
+    Call<ResponseBody> DeclineRequest(@Body String username);
+    //api/User/DiaryEntries
+    @GET("/api/User/UserDiaryEntries")
+    Call<List<LocationEntry>> getDiaryEntries(@Query("Username") String Username);
+    //api/User/Trips
+    @GET("/api/User/GetUserTrips")
+    Call<List<Trip>> getTrips(@Query("Username") String Username);
+    @GET("/api/User/goIncognito")
+    Call<ResponseBody> goIncognito();
+    @GET("/api/User/getIncognito")
+    Call<ResponseBody> getIncognito();
+    @POST("/api/User/emergencyCheckIn")
+    Call<ResponseBody> sendEmergencyCheckin(@Body LocationEntry entry);
+    @GET("/api/User/getEmergencyCheckIn")
+    Call<LocationEntry> getEmergencyCheckIn(@Query("Username") String username);
 }

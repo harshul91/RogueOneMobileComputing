@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -120,8 +121,17 @@ public class CreateTripActivity extends OptionsMenuActivity {
             Log.e(android.support.compat.BuildConfig.APPLICATION_ID,e.getMessage());
         }
         if(token==null){
-            finish();
-            startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+            try{
+                token = PreferenceManager.getDefaultSharedPreferences(this).getString(Constants.PACKAGE_NAME+"token","");
+            }catch(Exception e){
+                startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+                finish();
+            }
+            if(token.equals("")||token==null){
+                startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+                finish();
+            }
+
         }
         client = ServiceGenerator
                 .createService(APIClient.class,token,getBaseContext());

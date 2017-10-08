@@ -1,13 +1,21 @@
 package rogueone.rogueonemobliecomputing;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,11 +34,15 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import rogueone.rogueonemobliecomputing.Interfaces.APIClient;
+import rogueone.rogueonemobliecomputing.Models.LocationEntry;
 import rogueone.rogueonemobliecomputing.Models.MyLocation;
 
-public abstract class OptionsMenuActivity extends AppCompatActivity implements AddressResultReceiver.Receiver {
+public abstract class OptionsMenuActivity extends AppCompatActivity implements AddressResultReceiver.Receiver,
+ActivityCompat.OnRequestPermissionsResultCallback,SensorEventListener{
     protected static APIClient client;
     protected static String token;
+    private SensorManager mSensorManager;
+    private Sensor mSensor;
     protected Location mLastKnownLocation;
     private AddressResultReceiver mResultReceiver;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -45,6 +57,11 @@ public abstract class OptionsMenuActivity extends AppCompatActivity implements A
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        mSensorManager = (SensorManager) getSystemService(getApplicationContext().SENSOR_SERVICE);
+        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        if (mSensor != null){
+            mSensorManager.registerListener(this,mSensor,SensorManager.SENSOR_DELAY_NORMAL);
+        }
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
@@ -70,9 +87,6 @@ public abstract class OptionsMenuActivity extends AppCompatActivity implements A
         if (id == R.id.pending) {
             return showPending();
         }
-        if (id == R.id.checkin) {
-            return createCheckIn();
-        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -91,6 +105,8 @@ public abstract class OptionsMenuActivity extends AppCompatActivity implements A
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     closeDialog();
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                    sp.edit().clear().commit();
                     finish();
                     startActivity(new Intent(getApplicationContext(), LoginActivity.class));
                 } else {
@@ -241,13 +257,8 @@ public abstract class OptionsMenuActivity extends AppCompatActivity implements A
         if (ActivityCompat.checkSelfPermission(this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION},Constants.LOCATION_PERMISSION_CODE);
             return;
         }
         mFusedLocationClient.getLastLocation()
@@ -270,5 +281,104 @@ public abstract class OptionsMenuActivity extends AppCompatActivity implements A
                         startIntentService();
                     }
                 });
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        if(requestCode==Constants.LOCATION_PERMISSION_CODE){
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLocation();
+            }
+        }
+
+    }
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+
+        float gX = x / 9.8f;
+        float gY = y / 9.8f;
+        float gZ = z / 9.8f;
+
+        float gForce = (float) Math.sqrt(gX * gX + gY * gY + gZ * gZ);
+        if(gForce > 5){
+            Toast.makeText(this,"crash detected sending an emergency check-in",Toast.LENGTH_LONG).show();
+            sendEmergencyCheckIn();
+        }
+    }
+
+    private void sendEmergencyCheckIn() {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
+        if (ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION},Constants.LOCATION_PERMISSION_CODE);
+            return;
+        }
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        mLastKnownLocation = location;
+
+                        // In some rare cases the location returned can be null
+                        if (mLastKnownLocation == null) {
+                            return;
+                        }
+
+                        if (!Geocoder.isPresent()) {
+                            Toast.makeText(getApplicationContext(),
+                                    R.string.no_geocoder_available,
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        LocationEntry entry = new LocationEntry();
+                        entry.Comments = "Emergency Check-In";
+                        entry.Latitude = mLastKnownLocation.getLatitude();
+                        entry.Longitude = mLastKnownLocation.getLongitude();
+                        entry.Address = "Emergency Check-In";
+                        entry.Description = "Emergency Check-In";
+                        Call<ResponseBody> call = client.sendEmergencyCheckin(entry);
+                        call.enqueue(new Callback<ResponseBody>() {
+                            @Override
+                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                if(response.isSuccessful()){
+                                    Toast.makeText(getApplicationContext(),"Emergency Check-In saved",Toast.LENGTH_LONG).show();
+                                }else{
+                                    try {
+                                        showErrorToast(new Throwable(response.errorBody().string()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                showErrorToast(t);
+                            }
+                        });
+                    }
+                });
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
+                Log.e("Error",paramThrowable.getStackTrace().toString());
+                startActivity(new Intent(getApplicationContext(),MainActivity.class));
+            }
+        });
     }
 }

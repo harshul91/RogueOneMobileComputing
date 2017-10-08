@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,7 +47,10 @@ public class LocationEntryActivity extends OptionsMenuActivity {
     TextView _comment;
     @BindView(R.id.add_entry)
     Button _addEntry;
-
+    @BindView(R.id.add_tag)
+    Button _add_tag;
+    @BindView(R.id.entry_tag)
+    EditText _entry_tag;
     public View.OnClickListener sendEntry = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -79,7 +84,18 @@ public class LocationEntryActivity extends OptionsMenuActivity {
             });
         }
     };
-
+    public View.OnClickListener addTag = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            String tag = _entry_tag.getText().toString();
+            if(tag!=null&&tag!=""){
+                _tags.addChip(new Chip(tag,null));
+                _entry_tag.setText("");
+            }else{
+                Toast.makeText(getApplicationContext(),"tag cannot be empty",Toast.LENGTH_LONG).show();
+            }
+        }
+    };
     private LocationEntry getLocationFromScreen() {
         LocationEntry entry = new LocationEntry();
         entry.Address = _location.getText().toString();
@@ -113,8 +129,17 @@ public class LocationEntryActivity extends OptionsMenuActivity {
             Log.e(android.support.compat.BuildConfig.APPLICATION_ID,e.getMessage());
         }
         if(token==null){
-            finish();
-            startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+            try{
+                token = PreferenceManager.getDefaultSharedPreferences(this).getString(Constants.PACKAGE_NAME+"token","");
+            }catch(Exception e){
+                startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+                finish();
+            }
+            if(token.equals("")||token==null){
+                startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+                finish();
+            }
+
         }
         client = ServiceGenerator
                 .createService(APIClient.class,token,getBaseContext());
@@ -136,28 +161,15 @@ public class LocationEntryActivity extends OptionsMenuActivity {
             _location.setText("latitude : "+location.latitude+"\n longitude : "+location.longitude);
         }
         tripList = (List<String>) getIntent().getSerializableExtra("tripList");
-        if(tripList==null||tripList.size()==0){
-            _trips.setVisibility(View.INVISIBLE);
-        }else{
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(),
-                    android.R.layout.simple_spinner_item,tripList);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            _trips.setAdapter(adapter);
-        }
-        setChips();
+        tripList.add("My Diary");
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(),
+                android.R.layout.simple_list_item_1,tripList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        _trips.setAdapter(adapter);
         _location.setOnClickListener(launchListener);
         _addEntry.setOnClickListener(sendEntry);
-    }
-
-    private void setChips() {
-        List<Chip> chips = new ArrayList<>() ;
-        chips.add(new Chip("barber",null));
-        chips.add(new Chip("Grocery",null));
-        chips.add(new Chip("Market",null));
-        chips.add(new Chip("SportComplex",null));
-        chips.add(new Chip("Gym",null));
-        chips.add(new Chip("School",null));
-        _tags.setFilterableList(chips);
+        _add_tag.setOnClickListener(addTag);
+        _entry_tag.requestFocus();
     }
 
     @Override
